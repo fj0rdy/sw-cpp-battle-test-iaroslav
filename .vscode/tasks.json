@@ -1,0 +1,51 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "CMake: configure",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "-S", "${workspaceFolder}",
+                "-B", "${workspaceFolder}/build/debug",
+                "-G", "Ninja",
+                "-DCMAKE_BUILD_TYPE=Debug",
+                "-DCMAKE_C_COMPILER=clang",
+                "-DCMAKE_CXX_COMPILER=clang++",
+                "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON"
+            ],
+            "windows": {
+                "command": "C:/msys64/ucrt64/bin/cmake.exe",
+                "options": {
+                    "env": {
+                        "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
+                    }
+                }
+            },
+            "problemMatcher": []
+        },
+        {
+            "label": "CMake: build",
+            "type": "process",
+            "command": "cmake",
+            "args": [
+                "--build", "${workspaceFolder}/build/debug",
+                "--parallel"
+            ],
+            "windows": {
+                "command": "C:/msys64/ucrt64/bin/cmake.exe",
+                "options": {
+                    "env": {
+                        "PATH": "C:\\msys64\\ucrt64\\bin;${env:PATH}"
+                    }
+                }
+            },
+            "dependsOn": "CMake: configure",
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "problemMatcher": ["$gcc"]
+        }
+    ]
+}
