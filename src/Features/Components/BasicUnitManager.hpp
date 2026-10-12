@@ -1,60 +1,64 @@
 #pragma once
+
 #include <Core/Components/IUnitManager.hpp>
 #include <Core/Unit/Unit.hpp>
-#include <memory>
 #include <concepts>
-
-class ICommandSource;
+#include <memory>
 
 namespace sw::io
 {
-    class March;
+	struct March;
 }
 
-template<class UnitT>
-concept RegistrableUnit = 
-    std::derived_from<UnitT, Unit> &&
-    requires(ICommandSource& source, std::weak_ptr<IUnitManager> weak)
-    { 
-        { UnitT::registerCommandHandlers(source, weak) } -> std::same_as<void>;
-    };
-
-template <RegistrableUnit... UnitTypes>
-class BasicUnitmanager : public IUnitManager, public std::enable_shared_from_this<BasicUnitmanager<UnitTypes...>>
+namespace sw::sim
 {
-public:
-	BasicUnitmanager(SimulationConfig& config) :
-			IUnitManager(config)
-	{}
 
-	void registerCommandHandlers(std::shared_ptr<ICommandSource> commandSource) override;
+	class ICommandSource;
 
-	bool progress() override;
+	template <class UnitT>
+	concept RegistrableUnit
+		= std::derived_from<UnitT, Unit> && requires(ICommandSource& source, std::weak_ptr<IUnitManager> weak) {
+			  { UnitT::registerCommandHandlers(source, weak) } -> std::same_as<void>;
+		  };
 
-	void addUnit(std::shared_ptr<Unit> unit) override;
+	template <RegistrableUnit... UnitTypes>
+	class BasicUnitmanager : public IUnitManager, public std::enable_shared_from_this<BasicUnitmanager<UnitTypes...>>
+	{
+	public:
+		BasicUnitmanager(SimulationConfig& config) :
+				IUnitManager(config)
+		{}
 
-	std::shared_ptr<Unit> getUnit(uint32_t id) override;
+		void registerCommandHandlers(std::shared_ptr<ICommandSource> commandSource) override;
 
-	bool isCellAvailible(const CellPoint& p) override;
+		bool progress() override;
 
-	std::vector<std::shared_ptr<Unit>> getUnitsInRange(
-		const CellPoint& point, uint32_t minRange, uint32_t maxRange) override;
+		void addUnit(std::shared_ptr<Unit> unit) override;
 
-protected:
-    void removeDeadUnits();
+		std::shared_ptr<Unit> getUnit(Id id) override;
 
-    virtual void registerMarchCommand(ICommandSource& commandSource);
+		bool isCellAvailible(const CellPoint& p) override;
 
-	virtual void beforeRemoveDeadUnit(Unit::Ptr& deadUnit);
+		std::vector<std::shared_ptr<Unit>> getUnitsInRange(
+			const CellPoint& point, Distance minRange, Distance maxRange) override;
 
-	virtual void marchUnit(sw::io::March& command);
+	protected:
+		void removeDeadUnits();
 
-	void logUnitDied(uint32_t id);
+		virtual void registerMarchCommand(ICommandSource& commandSource);
 
-	void logUnitSpawned(Unit& unit);
+		virtual void beforeRemoveDeadUnit(Unit::Ptr& deadUnit);
 
-private:
-	std::vector<std::shared_ptr<Unit>> _units;
-};
+		virtual void marchUnit(io::March& command);
+
+		void logUnitDied(Id id);
+
+		void logUnitSpawned(Unit& unit);
+
+	private:
+		std::vector<std::shared_ptr<Unit>> _units;
+	};
+
+}  //namespace sw::sim
 
 #include "BasicUnitManager.tpp"

@@ -15,7 +15,7 @@
 
 int main(int argc, char** argv)
 {
-	using namespace sw;
+	using namespace sw::sim;
 
 	if (argc != 2)
 	{

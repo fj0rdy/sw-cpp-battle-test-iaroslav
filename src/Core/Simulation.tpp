@@ -2,6 +2,9 @@
 #include <Core/System/SimulationConfig.hpp>
 #include <IO/System/TypeRegistry.hpp>
 
+namespace sw::sim
+{
+
 	template <class CommandCT, class MapCT, class UnitsCT>
     	requires SimulationComponents<CommandCT, MapCT, UnitsCT>
 	Simulation<CommandCT, MapCT, UnitsCT>::Simulation(SimulationConfig& config) :
@@ -11,8 +14,8 @@
 	{
 		try
 		{
-			sw::TypeRegistry::Common().add<IMapManager>(_mapManager);
-			sw::TypeRegistry::Common().add<IUnitManager>(_unitManager);
+			TypeRegistry::Common().add<IMapManager>(_mapManager);
+			TypeRegistry::Common().add<IUnitManager>(_unitManager);
 
 			_mapManager->registerCommandHandlers(_commandSource);
 			_unitManager->registerCommandHandlers(_commandSource);
@@ -28,8 +31,8 @@
     	requires SimulationComponents<CommandCT, MapCT, UnitsCT>
 	void Simulation<CommandCT, MapCT, UnitsCT>::cleanup()
 	{
-		sw::TypeRegistry::Common().remove<IMapManager>();
-		sw::TypeRegistry::Common().remove<IUnitManager>();
+		TypeRegistry::Common().remove<IMapManager>();
+		TypeRegistry::Common().remove<IUnitManager>();
 		SimulationCommon::tickCounter.reset();
 	}
 
@@ -50,3 +53,5 @@
 			_hasProgress = _unitManager->progress();
 		}
 	}
+
+} //namespace sw::sim

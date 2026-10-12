@@ -1,23 +1,28 @@
 #pragma once
 #include <IO/System/CommandParser.hpp>
 
-class SimulationConfig;
-
-class ICommandSource
+namespace sw::sim
 {
-public:
-	ICommandSource(SimulationConfig&) {}
 
-	virtual ~ICommandSource() = default;
+	class SimulationConfig;
 
-	template <class TCommandData>
-	void add(std::function<void(TCommandData)> handler)
+	class ICommandSource
 	{
-		_parser.add<TCommandData>(std::move(handler));
-	}
+	public:
+		ICommandSource(SimulationConfig&) {}
 
-	virtual bool executeAll() = 0;
+		virtual ~ICommandSource() = default;
 
-protected:
-	sw::io::CommandParser _parser;
-};
+		template <class TCommandData>
+		void add(std::function<void(TCommandData)> handler)
+		{
+			_parser.add<TCommandData>(std::move(handler));
+		}
+
+		virtual bool executeAll() = 0;
+
+	protected:
+		io::CommandParser _parser;
+	};
+
+}  //namespace sw::sim

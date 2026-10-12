@@ -1,34 +1,41 @@
 #pragma once
+
 #include <Core/System/SimulationCommon.hpp>
+#include <Core/Unit/Unit.hpp>
 #include <Features/Ability/Attack.hpp>
 #include <Features/constants.hpp>
 
-class QuickShot : public Attack
+namespace sw::sim
 {
-public:
-	QuickShot() = default;
 
-protected:
-	bool canAttack(Unit& user) override
+	class QuickShot : public Attack
 	{
-		if (auto units = SimulationCommon::UnitManager())
+	public:
+		QuickShot() = default;
+
+	protected:
+		bool canAttack(Unit& user) override
 		{
-			auto targetsInRange = units->getUnitsInRange(user.getPosition(), 1, 1);
-			return targetsInRange.empty();
+			if (auto units = SimulationCommon::UnitManager())
+			{
+				auto targetsInRange = units->getUnitsInRange(user.getPosition(), 1, 1);
+				return targetsInRange.empty();
+			}
+
+			return false;
 		}
 
-		return false;
-	}
+		std::pair<Distance, Distance> getRange(Unit& user) override
+		{
+			auto range = user.getStatValue(StatName::Range);
+			return {2, range ? *range : 0};
+		}
 
-	std::pair<uint32_t, uint32_t> getRange(Unit& user) override
-	{
-		auto range = user.getStatValue(StatName::Range);
-		return {2, range ? *range : 0};
-	}
+		virtual Stat getDamage(Unit& user, Unit&) override
+		{
+			auto agl = user.getStatValue(StatName::Agility);
+			return agl ? *agl : 0;
+		}
+	};
 
-	virtual uint32_t getDamage(Unit& user, Unit&) override
-	{
-		auto agl = user.getStatValue(StatName::Agility);
-		return agl ? *agl : 0;
-	}
-};
+}  //namespace sw::sim

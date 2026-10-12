@@ -1,21 +1,27 @@
 #pragma once
+
 #include <Features/Unit/BasicUnit.hpp>
 #include <memory>
 
-class ICommandSource;
-class IUnitManager;
-
 namespace sw::io
 {
-    class SpawnHunter;
+	struct SpawnHunter;
 }
 
-class Hunter : public BasicUnit
+namespace sw::sim
 {
-public:
-	Hunter(sw::io::SpawnHunter& command);
 
-	const std::string& getType() const override;
+	class ICommandSource;
+	class IUnitManager;
 
-	static void registerCommandHandlers(ICommandSource& commandSource, std::weak_ptr<IUnitManager> unitManager);
-};
+	class Hunter : public BasicUnit
+	{
+	public:
+		Hunter(io::SpawnHunter& command);
+
+		const std::string& getType() const override;
+
+		static void registerCommandHandlers(ICommandSource& commandSource, std::weak_ptr<IUnitManager> unitManager);
+	};
+
+}  //namespace sw::sim

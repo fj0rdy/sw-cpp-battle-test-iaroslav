@@ -1,99 +1,118 @@
 #include "Unit.hpp"
+
 #include <Core/System/SimulationCommon.hpp>
 
-const std::string& Unit::getType() const
+namespace sw::sim
 {
-	static std::string type{};
-	return type;
-}
 
-const CellPoint& Unit::getPosition() const
-{
-	return _position;
-}
-
-void Unit::setPosition(const CellPoint& position)
-{
-	if (auto map = SimulationCommon::MapManager())
+	const std::string& Unit::getType() const
 	{
-		CellPoint newPos(position);
-		map->clampPoint(newPos);
-		_position = newPos;
+		static std::string type{};
+		return type;
 	}
-}
 
-bool Unit::isAlive() const
-{
-	return true;
-}
-
-bool Unit::occupiesSpace() const
-{
-	return true;
-}
-
-bool Unit::progress()
-{
-	for (auto& ability : _abilities)
+	const CellPoint& Unit::getPosition() const
 	{
-		if (ability && ability->use(*this))
+		return _position;
+	}
+
+	void Unit::setPosition(const CellPoint& position)
+	{
+		if (auto map = SimulationCommon::MapManager())
 		{
-			return true;
+			CellPoint newPos(position);
+			map->clampPoint(newPos);
+			_position = newPos;
 		}
 	}
 
-	return false;
-}
-
-bool Unit::hasStat(const std::string& name) const
-{
-	return _stats.find(name) != _stats.end();
-}
-
-Unit::OptStat Unit::getStatValue(const std::string& name) const
-{
-	auto it = _stats.find(name);
-	if (it != _stats.end())
+	bool Unit::isAlive() const
 	{
-		return it->second.second;
+		return true;
 	}
 
-	return OptStat{};
-}
-
-void Unit::setStatValue(const std::string& name, statValue value)
-{
-	auto it = _stats.find(name);
-	if (it != _stats.end())
+	bool Unit::occupiesSpace() const
 	{
-		it->second.second = value;
-	}
-}
-
-Unit::OptStat Unit::getStatBase(const std::string& name) const
-{
-	auto it = _stats.find(name);
-	if (it != _stats.end())
-	{
-		return it->second.first;
+		return true;
 	}
 
-	return OptStat{};
-}
+	bool Unit::progress()
+	{
+		for (auto& ability : _abilities)
+		{
+			if (ability && ability->use(*this))
+			{
+				return true;
+			}
+		}
 
-bool Unit::hasTrait(const std::string& name) const
-{
-	return _traits.contains(name);
-}
+		return false;
+	}
 
-Unit& Unit::addStat(const std::string& name, uint32_t value)
-{
-	_stats[name] = {value, value};
-	return *this;
-}
+	bool Unit::hasStat(const std::string& name) const
+	{
+		return _stats.find(name) != _stats.end();
+	}
 
-Unit& Unit::addTrait(const std::string& trait)
-{
-	_traits.emplace(trait);
-	return *this;
-}
+	Unit::OptStat Unit::getStatValue(const std::string& name) const
+	{
+		auto it = _stats.find(name);
+		if (it != _stats.end())
+		{
+			return it->second.second;
+		}
+
+		return OptStat{};
+	}
+
+	void Unit::setStatValue(const std::string& name, Stat value)
+	{
+		auto it = _stats.find(name);
+		if (it != _stats.end())
+		{
+			it->second.second = value;
+		}
+	}
+
+	void Unit::setStatBase(const std::string& name, Stat baseValue)
+	{
+		auto it = _stats.find(name);
+		if (it != _stats.end())
+		{
+			it->second.first = baseValue;
+			if (it->second.second > baseValue)
+			{
+				it->second.second = baseValue;
+			}
+		}
+	}
+
+	Unit::OptStat Unit::getStatBase(const std::string& name) const
+	{
+		auto it = _stats.find(name);
+		if (it != _stats.end())
+		{
+			return it->second.first;
+		}
+
+		return OptStat{};
+	}
+
+	bool Unit::hasTrait(const std::string& name) const
+	{
+		return _traits.contains(name);
+	}
+
+	Unit& Unit::addStat(const std::string& name, Stat value)
+	{
+		_stats[name] = {value, value};
+		return *this;
+	}
+
+	Unit& Unit::addTrait(const std::string& trait)
+	{
+		_traits.emplace(trait);
+		return *this;
+	}
+
+}  //namespace sw::sim

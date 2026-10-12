@@ -1,39 +1,45 @@
 #pragma once
 
 #include <Core/System/details/concepts.hpp>
+#include <Core/System/types.hpp>
 #include <cstdint>
 
-class ICommandSource;
-class IMapManager;
-class IUnitManager;
-
-template <class CommandCT, class MapCT, class UnitsCT>
-    requires SimulationComponents<CommandCT, MapCT, UnitsCT>
-class Simulation;
-
-class TickCounter
+namespace sw::sim
 {
+
+	class ICommandSource;
+	class IMapManager;
+	class IUnitManager;
+
 	template <class CommandCT, class MapCT, class UnitsCT>
-        requires SimulationComponents<CommandCT, MapCT, UnitsCT>
-	friend class ::Simulation;
+		requires SimulationComponents<CommandCT, MapCT, UnitsCT>
+	class Simulation;
 
-public:
-	uint64_t get()
+	class TickCounter
 	{
-		return _tickCount;
-	}
+		template <class CommandCT, class MapCT, class UnitsCT>
+			requires SimulationComponents<CommandCT, MapCT, UnitsCT>
+		friend class Simulation;
 
-protected:
-	void set(uint64_t value)
-	{
-		_tickCount = value;
-	}
+	public:
+		Tick get()
+		{
+			return _tickCount;
+		}
 
-	void reset()
-	{
-		_tickCount = 0;
-	}
+	protected:
+		void set(Tick value)
+		{
+			_tickCount = value;
+		}
 
-private:
-	uint64_t _tickCount = 0;
-};
+		void reset()
+		{
+			_tickCount = 0;
+		}
+
+	private:
+		Tick _tickCount = 0;
+	};
+
+}  //namespace sw::sim

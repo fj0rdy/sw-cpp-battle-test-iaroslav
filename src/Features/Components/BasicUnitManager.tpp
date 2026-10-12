@@ -3,7 +3,11 @@
 #include <IO/Commands/March.hpp>
 #include <IO/Events/UnitDied.hpp>
 #include <IO/Events/UnitSpawned.hpp>
+
 #include <algorithm>
+
+namespace sw::sim
+{
 
 template <RegistrableUnit... UnitTypes>
 void BasicUnitmanager<UnitTypes...>::registerCommandHandlers(std::shared_ptr<ICommandSource> commandSource)
@@ -44,7 +48,7 @@ void BasicUnitmanager<UnitTypes...>::addUnit(std::shared_ptr<Unit> unit)
 }
 
 template <RegistrableUnit... UnitTypes>
-std::shared_ptr<Unit> BasicUnitmanager<UnitTypes...>::getUnit(uint32_t id)
+std::shared_ptr<Unit> BasicUnitmanager<UnitTypes...>::getUnit(Id id)
 {
 	auto it = std::find_if(_units.begin(), _units.end(), [id](auto it) { return it->getId() == id; });
 	return it != _units.end() ? *it : std::shared_ptr<Unit>();
@@ -62,7 +66,7 @@ bool BasicUnitmanager<UnitTypes...>::isCellAvailible(const CellPoint& p)
 
 template <RegistrableUnit... UnitTypes>
 std::vector<std::shared_ptr<Unit>> BasicUnitmanager<UnitTypes...>::getUnitsInRange(
-	const CellPoint& point, uint32_t minRange, uint32_t maxRange)
+	const CellPoint& point, Distance minRange, Distance maxRange)
 {
 	std::vector<std::shared_ptr<Unit>> result;
 	if (auto map = SimulationCommon::MapManager())
@@ -84,7 +88,7 @@ template <RegistrableUnit... UnitTypes>
 void BasicUnitmanager<UnitTypes...>::registerMarchCommand(ICommandSource& commandSource)
 {
 	auto weak_this = this->weak_from_this();
-	commandSource.add<sw::io::March>(
+	commandSource.add<io::March>(
 		[weak_this](auto command)
 		{
 			if (auto shared_this = weak_this.lock())
@@ -121,7 +125,7 @@ void BasicUnitmanager<UnitTypes...>::beforeRemoveDeadUnit(Unit::Ptr& deadUnit)
 }
 
 template <RegistrableUnit... UnitTypes>
-void BasicUnitmanager<UnitTypes...>::marchUnit(sw::io::March& command)
+void BasicUnitmanager<UnitTypes...>::marchUnit(io::March& command)
 {
 	if (auto map = SimulationCommon::MapManager())
 	{
@@ -135,14 +139,16 @@ void BasicUnitmanager<UnitTypes...>::marchUnit(sw::io::March& command)
 }
 
 template <RegistrableUnit... UnitTypes>
-void BasicUnitmanager<UnitTypes...>::logUnitDied(uint32_t id)
+void BasicUnitmanager<UnitTypes...>::logUnitDied(Id id)
 {
-	SimulationCommon::LogEvent(sw::io::UnitDied{id});
+	SimulationCommon::logEvent(io::UnitDied{id});
 }
 
 template <RegistrableUnit... UnitTypes>
 void BasicUnitmanager<UnitTypes...>::logUnitSpawned(Unit& unit)
 {
-	SimulationCommon::LogEvent(
-		sw::io::UnitSpawned{unit.getId(), unit.getType(), unit.getPosition().x, unit.getPosition().y});
+	SimulationCommon::logEvent(
+		io::UnitSpawned{unit.getId(), unit.getType(), unit.getPosition().x, unit.getPosition().y});
 }
+    
+} //namespace sw::sim

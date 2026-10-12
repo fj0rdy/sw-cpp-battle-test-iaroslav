@@ -1,15 +1,21 @@
 #pragma once
-#include <cstdint>
 
-struct CellPoint
+#include <Core/System/types.hpp>
+
+namespace sw::sim
 {
-	CellPoint(uint32_t xv = 0, uint32_t yv = 0) :
-			x(xv),
-			y(yv)
-	{}
 
-	bool operator==(const CellPoint&) const = default;
+	struct CellPoint
+	{
+		CellPoint(Distance xv = 0, Distance yv = 0) :
+				x(xv),
+				y(yv)
+		{}
 
-	uint32_t x;
-	uint32_t y;
-};
+		bool operator==(const CellPoint&) const = default;
+
+		Distance x;
+		Distance y;
+	};
+
+}  //namespace sw::sim

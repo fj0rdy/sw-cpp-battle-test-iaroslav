@@ -1,11 +1,16 @@
 #pragma once
 
-class Unit;
-
-class IAbility
+namespace sw::sim
 {
-public:
-	IAbility() = default;
-	virtual ~IAbility() = default;
-	virtual bool use(Unit& user) = 0;
-};
+
+	class Unit;
+
+	class IAbility
+	{
+	public:
+		IAbility() = default;
+		virtual ~IAbility() = default;
+		virtual bool use(Unit& user) = 0;
+	};
+
+}  //namespace sw::sim

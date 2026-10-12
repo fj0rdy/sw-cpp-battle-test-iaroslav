@@ -1,41 +1,47 @@
 #pragma once
+
 #include <Core/Components/ICommandSource.hpp>
 #include <Core/System/SimulationConfig.hpp>
 #include <fstream>
 #include <stdexcept>
 #include <string>
 
-class FileCommandSource : public ICommandSource
+namespace sw::sim
 {
-public:
-	FileCommandSource(SimulationConfig& config) :
-			ICommandSource(config)
-	{
-		if (!config.read(_filePath, "commandFilePath"))
-		{
-			throw std::runtime_error{"command file is not specified!"};
-		}
-	}
 
-	bool executeAll() override
+	class FileCommandSource : public ICommandSource
 	{
-		bool result = false;
-		if (!_executed)
+	public:
+		FileCommandSource(SimulationConfig& config) :
+				ICommandSource(config)
 		{
-			std::ifstream file(_filePath);
-			if (!file)
+			if (!config.read(_filePath, "commandFilePath"))
 			{
-				throw std::runtime_error("Error: File not found - " + _filePath);
+				throw std::runtime_error{"command file is not specified!"};
+			}
+		}
+
+		bool executeAll() override
+		{
+			bool result = false;
+			if (!_executed)
+			{
+				std::ifstream file(_filePath);
+				if (!file)
+				{
+					throw std::runtime_error("Error: File not found - " + _filePath);
+				}
+
+				_parser.parse(file);
+				result = _executed = true;
 			}
 
-			_parser.parse(file);
-			result = _executed = true;
+			return result;
 		}
 
-		return result;
-	}
+	private:
+		std::string _filePath;
+		bool _executed = false;
+	};
 
-private:
-	std::string _filePath;
-	bool _executed = false;
-};
+}  //namespace sw::sim
