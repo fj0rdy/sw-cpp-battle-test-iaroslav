@@ -2,6 +2,7 @@
 #include <Core/Components/ICommandSource.hpp>
 #include <Core/Components/IMapManager.hpp>
 #include <Core/Components/IUnitManager.hpp>
+#include <Core/System/SimulationCommon.hpp>
 #include <Core/System/SimulationConfig.hpp>
 #include <IO/System/TypeRegistry.hpp>
 #include <cstdint>
@@ -32,18 +33,21 @@ public:
 		}
 		catch (...)
 		{
-			// cleaning if something went wrong..
-			sw::TypeRegistry::Common().remove<IMapManager>();
-			sw::TypeRegistry::Common().remove<IUnitManager>();
-
+			cleanup();
 			throw;
 		}
 	}
 
 	~Simulation()
 	{
+		cleanup();
+	}
+
+	static void cleanup()
+	{
 		sw::TypeRegistry::Common().remove<IMapManager>();
 		sw::TypeRegistry::Common().remove<IUnitManager>();
+		SimulationCommon::tickCounter.reset();
 	}
 
 	void start()
@@ -58,7 +62,7 @@ public:
 private:
 	void progress()
 	{
-		++_tick;
+		SimulationCommon::tickCounter.set(++_tick);
 
 		// if nothing to execute - progress simulation
 		if (_commandSource->executeAll())

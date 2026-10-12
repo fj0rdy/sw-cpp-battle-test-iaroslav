@@ -7,7 +7,7 @@
 class SimulationConfig
 {
 public:
-	using ValueVariant = std::variant<bool, uint32_t, double, std::string>;
+	using ValueVariant = std::variant<bool, int, uint32_t, double, std::string>;
 
 	bool hasValue(const std::string& propertyName) const
 	{

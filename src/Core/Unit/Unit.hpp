@@ -1,12 +1,14 @@
 #pragma once
 
 #include <Core/System/CellPoint.hpp>
+#include <Core/System/SimulationCommon.hpp>
 #include <Core/Unit/Components/IAbility.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <map>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -14,9 +16,10 @@
 class Unit
 {
 public:
-	using UnitPtr = std::shared_ptr<Unit>;
-	using statType = uint32_t;
-	using OptStat = std::optional<statType>;
+	using Ptr = std::shared_ptr<Unit>;
+	using statValue = uint32_t;
+	using statBaseValue = statValue;
+	using OptStat = std::optional<statValue>;
 
 public:
 	explicit Unit(uint32_t id) :
@@ -25,14 +28,15 @@ public:
 
 	virtual ~Unit() = default;
 
-	void setId(uint32_t id)
-	{
-		_id = id;
-	}
-
 	uint32_t getId()
 	{
 		return _id;
+	}
+
+	virtual const std::string& getType() const
+	{
+		static std::string type{};
+		return type;
 	}
 
 	virtual const CellPoint& getPosition() const
@@ -40,9 +44,14 @@ public:
 		return _position;
 	}
 
-	virtual void setPosition(const CellPoint& p)
+	virtual void setPosition(const CellPoint& position)
 	{
-		_position = p;
+		if (auto map = SimulationCommon::MapManager())
+		{
+			CellPoint newPos(position);
+			map->clampPoint(newPos);
+			_position = newPos;
+		}
 	}
 
 	virtual bool isAlive() const
@@ -61,7 +70,7 @@ public:
 	{
 		for (auto& ability : _abilities)
 		{
-			if (ability && ability->use(this))
+			if (ability && ability->use(*this))
 			{
 				return true;
 			}
@@ -75,15 +84,40 @@ public:
 		return _stats.find(name) != _stats.end();
 	}
 
-	OptStat getStat(const std::string& name) const
+	OptStat getStatValue(const std::string& name) const
 	{
 		auto it = _stats.find(name);
 		if (it != _stats.end())
 		{
-			return it->second;
+			return it->second.second;
 		}
 
 		return OptStat{};
+	}
+
+	void setStatValue(const std::string& name, statValue value)
+	{
+		auto it = _stats.find(name);
+		if (it != _stats.end())
+		{
+			it->second.second = value;
+		}
+	}
+
+	OptStat getStatBase(const std::string& name) const
+	{
+		auto it = _stats.find(name);
+		if (it != _stats.end())
+		{
+			return it->second.first;
+		}
+
+		return OptStat{};
+	}
+
+	bool hasTrait(const std::string& name) const
+	{
+		return _traits.contains(name);
 	}
 
 	template <class AbilityType>
@@ -96,24 +130,47 @@ public:
 			{ return dynamic_cast<AbilityType*>(ability.get()) != nullptr; });
 	}
 
-	Unit& operator<<(std::pair<const std::string, uint32_t> stat)
+	template <class AbilityType>
+	AbilityType* getAbility() const
 	{
-		_stats[stat.first] = stat.second;
+		AbilityType* result = nullptr;
+		for (const auto& ability : _abilities)
+		{
+			result = dynamic_cast<AbilityType*>(ability.get());
+
+			if (result)
+			{
+				break;
+			}
+		}
+
+		return result;
+	}
+
+	Unit& addStat(const std::string& name, uint32_t value)
+	{
+		_stats[name] = {value, value};
 		return *this;
 	}
 
-	Unit& operator<<(std::unique_ptr<IAbility> ability)
+	Unit& addTrait(const std::string& trait)
 	{
-		if (ability)
-		{
-			_abilities.emplace_back(std::move(ability));
-		}
+		_traits.emplace(trait);
+		return *this;
+	}
+
+	template <class AbilityType, class... Args>
+		requires std::derived_from<AbilityType, IAbility>
+	Unit& addAbility(Args&&... args)
+	{
+		_abilities.emplace_back(std::make_unique<AbilityType>(std::forward<Args>(args)...));
 		return *this;
 	}
 
 private:
-	std::map<std::string, statType> _stats;
+	std::map<std::string, std::pair<statBaseValue, statValue>> _stats;
 	std::vector<std::unique_ptr<IAbility>> _abilities;
+	std::set<std::string> _traits;
 	CellPoint _position;
 	uint32_t _id;
 };

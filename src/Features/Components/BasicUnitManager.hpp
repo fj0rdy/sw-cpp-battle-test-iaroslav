@@ -4,6 +4,8 @@
 #include <Core/System/SimulationCommon.hpp>
 #include <Core/Unit/Unit.hpp>
 #include <IO/Commands/March.hpp>
+#include <IO/Events/UnitDied.hpp>
+#include <IO/Events/UnitSpawned.hpp>
 #include <algorithm>
 #include <memory>
 
@@ -18,7 +20,7 @@ public:
 	void registerCommandHandlers(std::shared_ptr<ICommandSource> commandSource) override
 	{
 		auto weak_this = this->weak_from_this();
-		(UnitTypes::registerCommandHandlers(commandSource, weak_this), ...);
+		(UnitTypes::registerCommandHandlers(*commandSource, weak_this), ...);
 
 		commandSource->add<sw::io::March>(
 			[weak_this](auto command)
@@ -43,7 +45,7 @@ public:
 			success |= unit->progress();
 		}
 
-		std::erase_if(_units, [](const std::shared_ptr<Unit>& unit) -> bool { return !unit || !unit->isAlive(); });
+		removeDeadUnits();
 
 		return success;
 	}
@@ -53,6 +55,7 @@ public:
 		if (unit && !getUnit(unit->getId()))
 		{
 			_units.push_back(unit);
+			logUnitSpawned(*unit);
 		}
 	}
 
@@ -71,17 +74,19 @@ public:
 			   == _units.end();
 	}
 
-	std::vector<std::shared_ptr<Unit>> getUnitsInRange(const CellPoint& p, uint32_t range) override
+	std::vector<std::shared_ptr<Unit>> getUnitsInRange(
+		const CellPoint& point, uint32_t minRange, uint32_t maxRange) override
 	{
 		std::vector<std::shared_ptr<Unit>> result;
-		for (const auto& unit : _units)
+		if (auto map = SimulationCommon::MapManager())
 		{
-			const CellPoint& position = unit->getPosition();
-			auto xdif = std::max(p.x, position.x) - std::min(p.x, position.x);
-			auto ydif = std::max(p.y, position.y) - std::min(p.y, position.y);
-			if (std::max(xdif, ydif) <= range)
+			for (const auto& unit : _units)
 			{
-				result.push_back(unit);
+				auto dist = map->distance(point, unit->getPosition());
+				if (dist >= minRange && dist <= maxRange)
+				{
+					result.push_back(unit);
+				}
 			}
 		}
 
@@ -89,6 +94,30 @@ public:
 	}
 
 protected:
+	virtual void removeDeadUnits()
+	{
+		for (auto it = _units.begin(); it != _units.end();)
+		{
+			if (!*it || !(*it)->isAlive())
+			{
+				beforeRemoveDeadUnit(*it);
+				it = _units.erase(it);
+			}
+			else
+			{
+				++it;
+			}
+		}
+	}
+
+	virtual void beforeRemoveDeadUnit(Unit::Ptr& deadUnit)
+	{
+		if (deadUnit)
+		{
+			logUnitDied(deadUnit->getId());
+		}
+	}
+
 	virtual void marchUnit(sw::io::March command)
 	{
 		if (auto map = SimulationCommon::MapManager())
@@ -100,6 +129,17 @@ protected:
 				unit->march(point);
 			}
 		}
+	}
+
+	void logUnitDied(uint32_t id)
+	{
+		SimulationCommon::LogEvent(sw::io::UnitDied{id});
+	}
+
+	void logUnitSpawned(Unit& unit)
+	{
+		SimulationCommon::LogEvent(
+			sw::io::UnitSpawned{unit.getId(), unit.getType(), unit.getPosition().x, unit.getPosition().y});
 	}
 
 private:

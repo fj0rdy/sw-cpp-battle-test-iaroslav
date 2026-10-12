@@ -1,7 +1,10 @@
 #pragma once
 #include <Core/Components/ICommandSource.hpp>
 #include <Core/Components/IMapManager.hpp>
+#include <Core/System/SimulationCommon.hpp>
 #include <IO/Commands/CreateMap.hpp>
+#include <IO/Events/MapCreated.hpp>
+#include <IO/System/EventLog.hpp>
 #include <algorithm>
 #include <cmath>
 #include <memory>
@@ -46,6 +49,13 @@ public:
 		return isCellValid(p);
 	}
 
+	uint32_t distance(const CellPoint& p1, const CellPoint& p2) override
+	{
+		uint32_t xdif = std::max(p1.x, p2.x) - std::min(p1.x, p2.x);
+		uint32_t ydif = std::max(p1.y, p2.y) - std::min(p1.y, p2.y);
+		return std::max(xdif, ydif);
+	}
+
 	void clampPoint(CellPoint& p) override
 	{
 		if (!isInitialized())
@@ -80,6 +90,19 @@ public:
 protected:
 	void createMap(const sw::io::CreateMap& command)
 	{
-		resize(command.width, command.height);
+		if (!isInitialized())
+		{
+			resize(command.width, command.height);
+			logMapCreated();
+		}
+		else
+		{
+			// TODO: warning log
+		}
+	}
+
+	void logMapCreated()
+	{
+		SimulationCommon::LogEvent(sw::io::MapCreated{_width, _height});
 	}
 };

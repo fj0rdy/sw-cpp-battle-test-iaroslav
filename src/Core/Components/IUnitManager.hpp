@@ -25,7 +25,8 @@ public:
 
 	virtual void addUnit(std::shared_ptr<Unit>) = 0;
 	virtual std::shared_ptr<Unit> getUnit(uint32_t id) = 0;
-	virtual std::vector<std::shared_ptr<Unit>> getUnitsInRange(const CellPoint&, uint32_t range) = 0;
+	virtual std::vector<std::shared_ptr<Unit>> getUnitsInRange(const CellPoint&, uint32_t minRange, uint32_t maxRange)
+		= 0;
 
 	virtual bool isCellAvailible(const CellPoint&) = 0;
 };

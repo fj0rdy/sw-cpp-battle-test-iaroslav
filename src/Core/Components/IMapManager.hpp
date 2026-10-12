@@ -23,6 +23,7 @@ public:
 
 	virtual bool isCellValid(const CellPoint&) = 0;
 	virtual bool isCellAvailible(const CellPoint&) = 0;
+	virtual uint32_t distance(const CellPoint&, const CellPoint&) = 0;
 	virtual void clampPoint(CellPoint&) = 0;
 	virtual void advancePointToTarget(CellPoint&, const CellPoint&) = 0;
 
