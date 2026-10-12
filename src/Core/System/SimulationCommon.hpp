@@ -4,6 +4,7 @@
 #include <IO/System/EventLog.hpp>
 #include <IO/System/PrintDebug.hpp>
 #include <IO/System/TypeRegistry.hpp>
+#include <cstdint>
 #include <iostream>
 #include <utility>
 
@@ -24,6 +25,7 @@ namespace sw::sim
 
 		inline thread_local TickCounter tickCounter{};
 		inline thread_local EventLog eventLog{};
+		inline constexpr uint32_t randomSeed = 1993;
 
 		template <class EventT>
 		void logEvent(EventT&& event)

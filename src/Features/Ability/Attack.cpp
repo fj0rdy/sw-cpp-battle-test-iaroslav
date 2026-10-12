@@ -30,7 +30,7 @@ namespace sw::sim
 
 			if (!targetsInRange.empty())
 			{
-				static std::mt19937 rng{1993};
+				static std::mt19937 rng{SimulationCommon::randomSeed};
 				std::uniform_int_distribution<size_t> dist(0, targetsInRange.size() - 1);
 				if (auto target = targetsInRange[dist(rng)])
 				{
