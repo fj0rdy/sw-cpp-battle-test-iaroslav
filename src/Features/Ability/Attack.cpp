@@ -1,0 +1,72 @@
+#include "Attack.hpp"
+#include <Core/System/SimulationCommon.hpp>
+#include <Core/Unit/Unit.hpp>
+#include <Features/constants.hpp>
+#include <IO/Events/UnitAttacked.hpp>
+#include <random>
+
+bool Attack::use(Unit& user)
+{
+	if (!canAttack(user))
+	{
+		return false;
+	}
+
+	if (auto units = SimulationCommon::UnitManager())
+	{
+		auto [minRange, maxRange] = getRange(user);
+		auto targetsInRange = units->getUnitsInRange(user.getPosition(), minRange, maxRange);
+		std::erase_if(
+			targetsInRange,
+			[this, &user](const auto& unit)
+			{
+				return !unit || unit->getId() == user.getId() || !unit->hasStat(StatName::Health)
+						|| !*(unit->getStatValue(StatName::Health)) || this->targetFilter(*unit);
+			});
+
+		if (!targetsInRange.empty())
+		{
+			static std::mt19937 rng{1993};
+			std::uniform_int_distribution<uint32_t> dist(0, targetsInRange.size() - 1);
+			if (auto target = targetsInRange[dist(rng)])
+			{
+				uint32_t oldHP = *(target->getStatValue(StatName::Health));
+				if (uint32_t damage = getDamage(user, *target))
+				{
+					uint32_t newHP = damage > oldHP ? 0 : oldHP - damage;
+					target->setStatValue(StatName::Health, newHP);
+					logAttack(user, *target, damage, newHP);
+
+					return true;
+				}
+			}
+		}
+	}
+
+	return false;
+}
+
+void Attack::logAttack(Unit& user, Unit& target, uint32_t& damage, uint32_t& targetHp)
+{
+	SimulationCommon::LogEvent(sw::io::UnitAttacked{user.getId(), target.getId(), damage, targetHp});
+}
+
+bool Attack::canAttack(Unit&)
+{
+	return true;
+}
+
+bool Attack::targetFilter(Unit&)
+{
+	return false;
+}
+
+std::pair<uint32_t, uint32_t> Attack::getRange(Unit&)
+{
+	return {1, 1};
+}
+
+uint32_t Attack::getDamage(Unit&, Unit&)
+{
+	return 1;
+}

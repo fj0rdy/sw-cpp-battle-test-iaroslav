@@ -1,4 +1,5 @@
 #pragma once
+#include <Core/System/SimulationCommon.hpp>
 #include <Features/Ability/Attack.hpp>
 #include <Features/constants.hpp>
 

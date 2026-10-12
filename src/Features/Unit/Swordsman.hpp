@@ -1,41 +1,21 @@
 #pragma once
-#include <Core/Components/ICommandSource.hpp>
-#include <Core/Components/IUnitManager.hpp>
-#include <Features/Ability/CrushingHit.hpp>
-#include <Features/Ability/Movement.hpp>
 #include <Features/Unit/BasicUnit.hpp>
-#include <Features/constants.hpp>
-#include <IO/Commands/SpawnSwordsman.hpp>
 #include <memory>
+
+class ICommandSource;
+class IUnitManager;
+
+namespace sw::io
+{
+    class SpawnSwordsman;
+}
 
 class Swordsman : public BasicUnit
 {
 public:
-	Swordsman(sw::io::SpawnSwordsman& command) :
-			BasicUnit(command.unitId)
-	{
-		setPosition(CellPoint(command.x, command.y));
-		addStat(StatName::Health, command.hp);
-		addStat(StatName::Strength, command.strength);
-		addAbility<CrushingHit>();
-		addAbility<Movement>();
-	}
+	Swordsman(sw::io::SpawnSwordsman& command);
 
-	const std::string& getType() const override
-	{
-		static std::string type{"Swordsman"};
-		return type;
-	}
+	const std::string& getType() const override;
 
-	static void registerCommandHandlers(ICommandSource& commandSource, std::weak_ptr<IUnitManager> unitManager)
-	{
-		commandSource.add<sw::io::SpawnSwordsman>(
-			[unitManager](sw::io::SpawnSwordsman command)
-			{
-				if (auto shared_units = unitManager.lock())
-				{
-					shared_units->addUnit(std::make_shared<Swordsman>(command));
-				}
-			});
-	}
+	static void registerCommandHandlers(ICommandSource& commandSource, std::weak_ptr<IUnitManager> unitManager);
 };

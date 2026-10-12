@@ -1,9 +1,6 @@
 #pragma once
-
 #include <Core/System/CellPoint.hpp>
-#include <Core/System/SimulationCommon.hpp>
 #include <Core/Unit/Components/IAbility.hpp>
-#include <algorithm>
 #include <cstdint>
 #include <map>
 #include <memory>
@@ -12,6 +9,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include <algorithm>
 
 class Unit
 {
@@ -28,97 +26,30 @@ public:
 
 	virtual ~Unit() = default;
 
-	uint32_t getId()
+	inline uint32_t getId()
 	{
 		return _id;
 	}
 
-	virtual const std::string& getType() const
-	{
-		static std::string type{};
-		return type;
-	}
+	virtual const std::string& getType() const;
+	
+    virtual const CellPoint& getPosition() const;
+	virtual void setPosition(const CellPoint& position);
 
-	virtual const CellPoint& getPosition() const
-	{
-		return _position;
-	}
-
-	virtual void setPosition(const CellPoint& position)
-	{
-		if (auto map = SimulationCommon::MapManager())
-		{
-			CellPoint newPos(position);
-			map->clampPoint(newPos);
-			_position = newPos;
-		}
-	}
-
-	virtual bool isAlive() const
-	{
-		return true;
-	}
-
-	virtual bool occupiesSpace() const
-	{
-		return true;
-	}
-
+	virtual bool isAlive() const;
+	virtual bool occupiesSpace() const;
 	virtual void march(const CellPoint&) {}
+	virtual bool progress();
 
-	virtual bool progress()
-	{
-		for (auto& ability : _abilities)
-		{
-			if (ability && ability->use(*this))
-			{
-				return true;
-			}
-		}
+	bool hasStat(const std::string& name) const;
 
-		return false;
-	}
-
-	bool hasStat(const std::string& name) const
-	{
-		return _stats.find(name) != _stats.end();
-	}
-
-	OptStat getStatValue(const std::string& name) const
-	{
-		auto it = _stats.find(name);
-		if (it != _stats.end())
-		{
-			return it->second.second;
-		}
-
-		return OptStat{};
-	}
-
-	void setStatValue(const std::string& name, statValue value)
-	{
-		auto it = _stats.find(name);
-		if (it != _stats.end())
-		{
-			it->second.second = value;
-		}
-	}
-
-	OptStat getStatBase(const std::string& name) const
-	{
-		auto it = _stats.find(name);
-		if (it != _stats.end())
-		{
-			return it->second.first;
-		}
-
-		return OptStat{};
-	}
-
-	bool hasTrait(const std::string& name) const
-	{
-		return _traits.contains(name);
-	}
+	OptStat getStatValue(const std::string& name) const;
+	void setStatValue(const std::string& name, statValue value);
+    Unit& addStat(const std::string& name, uint32_t value);
+	
+    OptStat getStatBase(const std::string& name) const;
+	bool hasTrait(const std::string& name) const;
+	Unit& addTrait(const std::string& trait);
 
 	template <class AbilityType>
 	bool hasAbility() const
@@ -145,18 +76,6 @@ public:
 		}
 
 		return result;
-	}
-
-	Unit& addStat(const std::string& name, uint32_t value)
-	{
-		_stats[name] = {value, value};
-		return *this;
-	}
-
-	Unit& addTrait(const std::string& trait)
-	{
-		_traits.emplace(trait);
-		return *this;
 	}
 
 	template <class AbilityType, class... Args>
